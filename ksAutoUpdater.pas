@@ -22,8 +22,14 @@ function CreateAutoUpdater(AUrl, ACurrentETag: string;
 
 implementation
 
-uses Windows, Messages, Forms, System.Net.HttpClient, ExtCtrls, Classes,
-  SysUtils, System.IOUtils, ShellAPi, IniFiles, DateUtils;
+uses
+{$IF declared(FireMonkeyVersion)}
+  FMX.Forms, FMX.Types, FMX.Platform.Win,
+{$ELSE}
+  Vcl.Forms, Vcl.ExtCtrls,
+{$ENDIF}
+  Winapi.Windows, Winapi.Messages, System.Classes, System.SysUtils,
+  System.IOUtils, Winapi.ShellAPi, System.Net.HttpClient;
 
 type
   TksAutoUpdater = class(TInterfacedObject, IksAutoUpdater)
@@ -161,7 +167,12 @@ begin
       FUpdateAvailable := False;
       FNewFile := '';
       Sleep(1000);
+{$IF declared(FireMonkeyVersion)}
+      PostMessage(WindowHandleToPlatform(Application.MainForm.Handle).Wnd,
+        WM_QUIT, 0, 0);
+{$ELSE}
       PostMessage(Application.MainForm.Handle, WM_QUIT, 0, 0);
+{$ENDIF}
     end;
   end
   else
@@ -210,8 +221,8 @@ begin
                 FETag := AResponse.HeaderValue['ETag'];
                 FNewFile := ChangeFileExt(TPath.GetTempFileName, '.exe');
                 AStream.SaveToFile(FNewFile);
-                if (GetApplicationBuild(FNewFile) > GetApplicationBuild) or
-                  (FCheckBuild = False) then
+                if (FCheckBuild = False) or (GetApplicationBuild(FNewFile) >
+                  GetApplicationBuild) then
                 begin
                   FUpdateAvailable := True;
                   TThread.Queue(nil,
@@ -247,6 +258,7 @@ end;
 
 procedure TksAutoUpdater.CreateTimer;
 begin
+
   FTimer := TTimer.Create(nil);
   FTimer.Interval := 5000;
   FTimer.OnTimer := OnTimer;
