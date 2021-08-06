@@ -3,7 +3,8 @@ unit ksAutoUpdater;
 interface
 
 type
-  TksUpdateAvailableEvent = reference to procedure(Sender: TObject; AETag: string);
+  TksUpdateAvailableEvent = reference to procedure(Sender: TObject;
+    AETag: string);
 
   IksAutoUpdater = interface
     function GetETag: string;
@@ -15,12 +16,9 @@ type
     property ETag: string read GetETag;
   end;
 
-
-  function CreateAutoUpdater(AUrl,
-                             ACurrentETag: string;
-                             AIntervalSeconds: integer;
-                             AUpdateAvailableEvent: TksUpdateAvailableEvent;
-                             const ACheckBuild: Boolean = True): IksAutoUpdater;
+function CreateAutoUpdater(AUrl, ACurrentETag: string;
+  AIntervalSeconds: integer; AUpdateAvailableEvent: TksUpdateAvailableEvent;
+  const ACheckBuild: Boolean = True): IksAutoUpdater;
 
 implementation
 
@@ -44,32 +42,30 @@ type
     procedure SetUpdateUrl(const Value: string);
     procedure OnTimer(Sender: TObject);
   public
-    constructor Create(AUpdateUrl: string;
-                       ACheckIntervalSeconds: integer;
-                       AETag: string;
-                       ACheckBuild: Boolean;
-                       AOnUpdateAvailable: TksUpdateAvailableEvent); virtual;
+    constructor Create(AUpdateUrl: string; ACheckIntervalSeconds: integer;
+      AETag: string; ACheckBuild: Boolean;
+      AOnUpdateAvailable: TksUpdateAvailableEvent); virtual;
     destructor Destroy; override;
     function UpdateAvailable: Boolean;
     procedure DoUpdate(const AReplaceRunningExe: Boolean = False);
-    property UpdateUrl: string read GetUpdateUrl write SetUpdateUrl;
+    property UpdateURL: string read GetUpdateUrl write SetUpdateUrl;
     property ETag: string read GetETag;
   end;
 
-function CreateAutoUpdater(AUrl,
-                           ACurrentETag: string;
-                           AIntervalSeconds: integer;
-                           AUpdateAvailableEvent: TksUpdateAvailableEvent;
-                           const ACheckBuild: Boolean = True): IksAutoUpdater;
+function CreateAutoUpdater(AUrl, ACurrentETag: string;
+  AIntervalSeconds: integer; AUpdateAvailableEvent: TksUpdateAvailableEvent;
+  const ACheckBuild: Boolean = True): IksAutoUpdater;
 begin
-  Result := TksAutoUpdater.Create(AUrl, AIntervalSeconds, ACurrentETag,  ACheckBuild, AUpdateAvailableEvent);
+  Result := TksAutoUpdater.Create(AUrl, AIntervalSeconds, ACurrentETag,
+    ACheckBuild, AUpdateAvailableEvent);
 end;
 
-procedure GetApplicationVersion(var AMajor, AMinor, ARelease, ABuild: integer; const AExe: string = '');
+procedure GetApplicationVersion(var AMajor, AMinor, ARelease, ABuild: integer;
+  const AExe: string = '');
 var
-	VerInfoSize, VerValueSize, DUMMY: DWORD;
-	VerInfo:pointer;
-	VerValue: PVSFixedFileInfo;
+  VerInfoSize, VerValueSize, DUMMY: DWORD;
+  VerInfo: pointer;
+  VerValue: PVSFixedFileInfo;
   AFilename: string;
 begin
   try
@@ -77,22 +73,22 @@ begin
     AMinor := 0;
     ARelease := 0;
     ABuild := 0;
-    AFileName := AExe;
+    AFilename := AExe;
 
-    if AFileName = '' then
-      AFileName := ParamStr(0);
+    if AFilename = '' then
+      AFilename := ParamStr(0);
     if FileExists(AFilename) = False then
       Exit;
-    VerInfoSize:=GetFileVersionInfoSize(Pchar(AFilename), DUMMY);
-    GetMem(verinfo, verinfosize);
-    GetFileVersionInfo(pchar(AFilename),0,VerInfoSize, VerInfo);
-    VerQueryValue(VerInfo,'\',Pointer(VerValue), VerValueSize);
+    VerInfoSize := GetFileVersionInfoSize(Pchar(AFilename), DUMMY);
+    GetMem(VerInfo, VerInfoSize);
+    GetFileVersionInfo(Pchar(AFilename), 0, VerInfoSize, VerInfo);
+    VerQueryValue(VerInfo, '\', pointer(VerValue), VerValueSize);
     With VerValue^ do
     begin
-      AMajor := dwFileVersionMS shr 16;				//Major
-      AMinor := dwFileVersionMS and $FFFF;		//Minor
-      ARelease := dwFileVersionLS shr 16;				//Release
-      ABuild := dwFileVersionLS and $FFFF;    //Build
+      AMajor := dwFileVersionMS shr 16; // Major
+      AMinor := dwFileVersionMS and $FFFF; // Minor
+      ARelease := dwFileVersionLS shr 16; // Release
+      ABuild := dwFileVersionLS and $FFFF; // Build
     end;
     FreeMem(VerInfo, VerInfoSize);
   except
@@ -102,7 +98,7 @@ end;
 
 function GetApplicationBuild(const AExe: string = ''): integer;
 var
-  v1,v2,v3,v4: integer;
+  v1, v2, v3, v4: integer;
 begin
   GetApplicationVersion(v1, v2, v3, v4, AExe);
   Result := v4;
@@ -118,7 +114,7 @@ begin
     AStrings.Text := Trim(StringReplace(AVersionStr, '.', #13, [rfReplaceAll]));
     if AStrings.Count = 0 then
       Exit;
-    Result := StrToIntDef(AStrings[AStrings.Count-1], 0);
+    Result := StrToIntDef(AStrings[AStrings.Count - 1], 0);
   finally
     AStrings.Free;
   end;
@@ -126,12 +122,9 @@ end;
 
 { TksAutoUpdater }
 
-constructor TksAutoUpdater.Create(//AAppID: string;
-                                AUpdateUrl: string;
-                                ACheckIntervalSeconds: integer;
-                                AETag: string;
-                                ACheckBuild: Boolean;
-                                AOnUpdateAvailable: TksUpdateAvailableEvent);
+constructor TksAutoUpdater.Create( // AAppID: string;
+  AUpdateUrl: string; ACheckIntervalSeconds: integer; AETag: string;
+  ACheckBuild: Boolean; AOnUpdateAvailable: TksUpdateAvailableEvent);
 begin
   FETag := AETag;
   FUpdateUrl := AUpdateUrl;
@@ -163,7 +156,7 @@ begin
     if CopyFile(PWideChar(FNewFile), PWideChar(ParamStr(0)), False) then
     begin
       Sleep(1000);
-      ShellExecute(0, nil, PChar(ParamStr(0)), nil, nil, SW_SHOWNORMAL);
+      ShellExecute(0, nil, Pchar(ParamStr(0)), nil, nil, SW_SHOWNORMAL);
       DeleteFile(FNewFile);
       FUpdateAvailable := False;
       FNewFile := '';
@@ -173,7 +166,7 @@ begin
   end
   else
   begin
-    ShellExecute(0, nil, PChar(FNewFile), PChar('/SILENT'), nil, SW_SHOWNORMAL);
+    ShellExecute(0, nil, Pchar(FNewFile), Pchar('/SILENT'), nil, SW_SHOWNORMAL);
   end;
 end;
 
@@ -192,7 +185,6 @@ begin
   FUpdateUrl := Value;
 end;
 
-
 procedure TksAutoUpdater.OnTimer(Sender: TObject);
 var
   AHttp: THttpClient;
@@ -204,10 +196,11 @@ begin
     procedure
     begin
       try
-        AHttp := THTTPClient.Create;
+        AHttp := THttpClient.Create;
         try
           AResponse := AHttp.Head(FUpdateUrl);
-          if (AResponse.StatusCode = 200) and (AResponse.HeaderValue['ETag'] <> FETag) then
+          if (AResponse.StatusCode = 200) and (AResponse.HeaderValue['ETag'] <>
+            FETag) then
           begin
             AStream := TMemoryStream.Create;
             try
@@ -217,7 +210,8 @@ begin
                 FETag := AResponse.HeaderValue['ETag'];
                 FNewFile := ChangeFileExt(TPath.GetTempFileName, '.exe');
                 AStream.SaveToFile(FNewFile);
-                if (GetApplicationBuild(FNewFile) > GetApplicationBuild) or (FCheckBuild = False) then
+                if (GetApplicationBuild(FNewFile) > GetApplicationBuild) or
+                  (FCheckBuild = False) then
                 begin
                   FUpdateAvailable := True;
                   TThread.Queue(nil,
@@ -225,8 +219,7 @@ begin
                     begin
                       if Assigned(FUpdateAvailableEvent) then
                         FUpdateAvailableEvent(Self, FETag);
-                    end
-                  );
+                    end);
                 end;
               end;
             finally
@@ -244,18 +237,15 @@ begin
         TThread.Queue(nil,
           procedure
           begin
-            FTimer.Interval := FIntervalSeconds*1000;
+            FTimer.Interval := FIntervalSeconds * 1000;
             FTimer.Enabled := True;
-          end
-        );
+          end);
       end;
 
-
-    end
-  ).Start;
+    end).Start;
 end;
 
-procedure  TksAutoUpdater.CreateTimer;
+procedure TksAutoUpdater.CreateTimer;
 begin
   FTimer := TTimer.Create(nil);
   FTimer.Interval := 5000;
